@@ -1,7 +1,7 @@
-from typing import Any, Mapping, TypedDict
+from typing import Any, Mapping, Optional, TypedDict
 
 
 class BuildBaseUrlProps(TypedDict):
     url: str
     path: str
-    query: Mapping[Any, Any]
+    query: Optional[Mapping[Any, Any]]

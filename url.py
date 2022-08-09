@@ -17,6 +17,6 @@ class Url:
         path = props['path']
         scheme = 'http'
         netloc: str = url
-        qs: str = urlencode(query)
+        qs: str = urlencode(query) if query is not None else ''
 
         return urlunsplit((scheme, netloc, path, qs, ''))
