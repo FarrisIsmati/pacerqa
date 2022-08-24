@@ -1,7 +1,9 @@
 import os
 import json
+from typing import List
 from dotenv import load_dotenv
 from recap_api import RecapApi
+from recap_types import RecapSearchResultResponseProps
 
 load_dotenv()
 
@@ -13,15 +15,21 @@ class Collect:
         recap_token: str = os.environ['RECAP_TOKEN']
         self.recap = RecapApi(recap_token)
 
-    def get_range(self, court: str, filed_before: str, filed_after: str):
-        response = self.recap.search(court, filed_before, filed_after)
-        url1 = response['results'][0]['absolute_url']
-        print(url1)
+    def create_name_from_record(self, record: RecapSearchResultResponseProps):
+        return f"{record['court_id']}-_-{record['caseName']}-_-{record['entry_date_filed']}.pdf"
+
+    def get_all_paginated_records(self, court: str, filed_before: str, filed_after: str):
+       return self.recap.search_paginated(court, filed_before, filed_after)
+
+    def download_records(self, records: List[RecapSearchResultResponseProps]):
+        records = records[0:5]
+        for record in records:
+            self.recap.download(self.create_name_from_record(record), record['filepath_local'])
 
 
 collect = Collect()
-range = collect.get_range('dcd', '07/01/22', '08/01/22')
-
+records = collect.get_all_paginated_records('dcd', '07/01/22', '08/01/22')
+collect.download_records(records)
 # Notes it's been a while huh?
 # Figure out what type of documents are you downloading
 # What are their types

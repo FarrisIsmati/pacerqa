@@ -52,6 +52,6 @@ class RecapSearchResultResponseProps(TypedDict):
 
 class RecapSearchResponseProps(TypedDict):
     count: int
-    next: str
-    previous: str or None
+    next: Optional[str]
+    previous: Optional[str]
     results: List[RecapSearchResultResponseProps]

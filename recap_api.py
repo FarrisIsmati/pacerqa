@@ -1,11 +1,12 @@
 import os
+from typing import List, cast
 import requests
 import urllib.request
 import shutil
 import moment
 from url import Url
 from constants import constants
-from recap_types import BuildBaseUrlProps, RecapSearchResponseProps
+from recap_types import BuildBaseUrlProps, RecapSearchResponseProps, RecapSearchResultResponseProps
 from dotenv import load_dotenv
 import json
 
@@ -17,6 +18,7 @@ class RecapApi:
 
     def __init__(self, token: str) -> None:
         self.token: str = token
+
 
     def search(self, court: str, filed_after: str, filed_before: str) -> RecapSearchResponseProps:
         url_params: BuildBaseUrlProps = {
@@ -39,7 +41,26 @@ class RecapApi:
 
         return response.json()
 
-    def download(self, path: str):
+    def search_paginated(self, court: str, filed_after: str, filed_before: str) -> List[RecapSearchResultResponseProps]:
+        all_records: List[RecapSearchResultResponseProps] = []
+        cur_res = self.search(court, filed_after, filed_before)
+        is_more = cur_res['next'] != None
+        all_records = [*all_records, *cur_res['results']]
+
+        while is_more:
+            next_url = cast(str, cur_res['next'])
+            if is_more:
+                res = requests.get(
+                    next_url,
+                    headers=self.url.headers(self.token)
+                )
+                cur_res = res.json()
+                is_more = cur_res['next'] != None
+                all_records = [*all_records, *cur_res['results']]
+                
+        return all_records
+
+    def download(self, name: str, path: str):
         url_params: BuildBaseUrlProps = {
             'url': constants['RECAP_DOWNLOAD_URL'],
             'path': path,
@@ -51,5 +72,5 @@ class RecapApi:
             url,
             headers=self.url.headers(self.token)
         )
-        with urllib.request.urlopen(url) as response, open('filio2.pdf', 'wb') as out_file:
+        with urllib.request.urlopen(url) as response, open(f'pacer/pdfs/{name}', 'wb') as out_file:
             shutil.copyfileobj(response, out_file)
